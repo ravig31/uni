@@ -1,0 +1,3 @@
+BValue returns 101 because it is equal to the memory address of AValue, BValue itself is a pointer
+not an actual integer value. Thus when you deference it goes to the address stored in BValue and retrieves
+the value found there (which is the same as AValue).
