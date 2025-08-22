@@ -85,11 +85,11 @@ const isDivisibleByThreeOrFive = x =>
  * @returns the sum
  */
 const selectiveSummer = f => n => {
-    const summer_aux = f => n => {
+    const summer_aux = n => {
         if (n == 0) return 0;
-        return f(n) ? n + summer_aux(f)(n - 1) : summer_aux(f)(n - 1);
+        return f(n) ? n + summer_aux(n - 1) : summer_aux(n - 1);
     };
-    return summer_aux(f)(n); // Why doesn't summer_aux(f, n) work?
+    return summer_aux(n); // Why doesn't summer_aux(f, n) work?
 };
 
 /**
@@ -124,7 +124,7 @@ const projectEulerProblem1 = () => filteredSum(1000);
  * @param arr Array to print
  */
 const printArray = x => {
-    console.log(x);
+    forEach(console.log, x);
 };
 
 /**
@@ -312,7 +312,9 @@ function filter(f, list) {
     if (!list) return null;
 
     // Skip value
-    if (!f(head(list))) return cons([], filter(f, rest(list)));
+    if (!f(head(list))) return filter(f, rest(list));
 
     return cons(head(list), filter(f, rest(list)));
 }
+
+

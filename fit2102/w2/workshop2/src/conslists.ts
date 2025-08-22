@@ -20,7 +20,7 @@ type Selector<T> = (head: T, rest: ConsList<T>) => T | ConsList<T>;
  * cons "constructs" a list node, if no second argument is specified it is the last node in the list
  */
 function cons<T>(head: T, rest: ConsList<T>): Cons<T> {
-    return (selector: Selector<T>) => selector(head, rest);
+	return (selector: Selector<T>) => selector(head, rest);
 }
 
 /**
@@ -28,7 +28,7 @@ function cons<T>(head: T, rest: ConsList<T>): Cons<T> {
  * @param list is a Cons (note, not an empty ConsList)
  */
 function head<T>(list: Cons<T>): T {
-    return <T>list((head, rest) => head);
+	return <T>list((head, rest) => head);
 }
 
 /**
@@ -36,23 +36,23 @@ function head<T>(list: Cons<T>): T {
  * @param list is a Cons (note, not an empty ConsList)
  */
 function rest<T>(list: Cons<T>): ConsList<T> {
-    return <ConsList<T>>list((head, rest) => rest);
+	return <ConsList<T>>list((head, rest) => rest);
 }
 
 function fromArray<T>(a: T[]): ConsList<T> {
-    return a.length ? cons(a[0], fromArray(a.slice(1))) : null;
+	return a.length ? cons(a[0], fromArray(a.slice(1))) : null;
 }
 
 function toArray<T>(l: ConsList<T>): T[] {
-    return l ? [head(l), ...toArray(rest(l))] : [];
+	return l ? [head(l), ...toArray(rest(l))] : [];
 }
 
 // example of how to recurse over the list:
 function forEach<T>(f: (_: T) => void, list: ConsList<T>): void {
-    if (list) {
-        f(head(list));
-        forEach(f, rest(list));
-    }
+	if (list) {
+		f(head(list));
+		forEach(f, rest(list));
+	}
 }
 
 /** ======= EXERCISE 2 =============================
@@ -78,8 +78,8 @@ const deepEqual: <T>(a: ConsList<T>) => (b: ConsList<T>) => boolean = a => b => 
  * @param l the list
  */
 const map: <T, U>(f: (_: T) => U) => (l: ConsList<T>) => ConsList<U> = f => l => {
-    if (!l) return null;
-    return cons(f(head(l)), map(f)(rest(l)));
+	if (!l) return null;
+	return cons(f(head(l)), map(f)(rest(l)));
 };
 
 /** ======= EXERCISE 5 =============================
@@ -91,7 +91,7 @@ const concat: <T>(l1: ConsList<T>) => (l2: ConsList<T>) => ConsList<T> = l1 => l
 	if (!l1) return l2;
 	return cons(head(l1), concat(rest(l1))(l2));
 }
-    
+
 
 /** ======= EXERCISE 6 =============================
  * join a list of lists into a flat list
@@ -99,8 +99,8 @@ const concat: <T>(l1: ConsList<T>) => (l2: ConsList<T>) => ConsList<T> = l1 => l
  * @param list2 Second list
  */
 const join: <T>(l: ConsList<ConsList<T>>) => ConsList<T> = l => {
-    if (!l) return null;
-    return concat(head(l))(join(rest(l)));
+	if (!l) return null;
+	return concat(head(l))(join(rest(l)));
 };
 
 /** ======= EXERCISE 7 =============================
@@ -115,24 +115,24 @@ const join: <T>(l: ConsList<ConsList<T>>) => ConsList<T> = l => {
 // join() => [U, U, U, U, U, U, ...]
 
 const concatMap: <T, U>(
-    f: (_: T) => ConsList<U>,
+	f: (_: T) => ConsList<U>,
 ) => (l: ConsList<T>) => ConsList<U> = f => l => {
 	if (!l) return null;
 	return join(map(f)(l));
 };
 
 export {
-    cons,
-    ConsList,
-    len,
-    forEach,
-    concatMap,
-    head,
-rest,
-    fromArray,
-    deepEqual,
-    map,
-    concat,
-    join,
-    toArray,
+	cons,
+	ConsList,
+	len,
+	forEach,
+	concatMap,
+	head,
+	rest,
+	fromArray,
+	deepEqual,
+	map,
+	concat,
+	join,
+	toArray,
 };
