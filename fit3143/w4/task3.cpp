@@ -29,21 +29,23 @@ std::vector<int> getPrimesToSqrtN(int k) {
 }
 
 
-void printPrimesToOpenMP(int n, int threads) {
+std::vector<bool> printPrimesToOpenMP(int n, int threads) {
     if (n < 2)
-        return;
+        return {true, true};
     // get primes < sqrt(n)
     auto basePrimes = getPrimesToSqrtN((int)floor(sqrt(n)));
 
     std::vector<bool> isComp(n + 1);
     isComp[0] = isComp[1] = true;
 
-    ll totalChunks = n - 2 + 1;
-    ll chunkSize = (totalChunks + threads - 1) / threads; // 8 threads 
-    int threadSpawned = 0;
+    ll totalChunks = n - 1;
+	ll segments = threads * 10;
+    ll chunkSize = (totalChunks + segments - 1) / segments; // 8 threads 
 
-	#pragma omp paralell for schedule(static, threads) nowait num_threads(threads)
-    for (ll rangeStart = 2; rangeStart <= n; rangeStart += chunkSize) {
+
+    omp_set_num_threads(threads);
+    #pragma omp parallel for schedule(dynamic, 1)
+	for (ll rangeStart = 2; rangeStart <= n; rangeStart += chunkSize) {
         ll rangeEnd = rangeStart + chunkSize - 1; // inclusive
         if (rangeEnd > n)
             rangeEnd = n;
@@ -56,9 +58,9 @@ void printPrimesToOpenMP(int n, int threads) {
         }
     }
 
-    for (int64_t i = 2; i < n; ++i)
-        if (!isComp[i])
-            std::cout << i << '\n'; // output rest
+	return isComp;
+
+
 }
 
 int main() {
@@ -71,8 +73,12 @@ int main() {
     {
         using namespace std::chrono;
         auto start = high_resolution_clock::now();
-        printPrimesToOpenMP(n, threads);
+        const auto isComp = printPrimesToOpenMP(n, threads);
         auto end = high_resolution_clock::now();
+
+		// for (int64_t i = 2; i < n; ++i)
+        // 	if (!isComp[i])
+        //     	std::cout << i << '\n'; // output rest
 
         std::cout << "Time taken: "
                   << duration_cast<microseconds>(end - start).count() / 10e6

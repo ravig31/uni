@@ -2,9 +2,10 @@
 #include <iostream>
 #include <vector>
 
-void printPrimesToN(int n) {
+std::vector<bool> printPrimesToN(int n) {
     if (n < 2)
-        return;
+        return {true, true};
+
     std::vector<bool> is_composite(n + 1);
 
     is_composite[0] = is_composite[1] = true;
@@ -19,11 +20,7 @@ void printPrimesToN(int n) {
         }
     }
 
-    for (int i = 0; i < n; i++) {
-        if (!is_composite[i]) {
-            std::cout << i << '\n';
-        }
-    }
+    return is_composite;
 }
 
 int main() {
@@ -34,9 +31,14 @@ int main() {
     {
         using namespace std::chrono;
         auto start = high_resolution_clock::now();
-        printPrimesToN(n);
+        auto isComp = printPrimesToN(n);
         auto end = high_resolution_clock::now();
-
+		
+		for (int i = 0; i < n; i++) {
+			if (!isComp[i]) {
+				std::cout << i << '\n';
+			}
+		}
         std::cout << "Time taken: "
                   << duration_cast<microseconds>(end - start).count() / 10e6
                   << "seconds";

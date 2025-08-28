@@ -381,16 +381,18 @@ function printWithDelay() {
             mergeMap(csvText => {
                 return from(csvText.trim().split(/\r?\n/)); // take one csv can create a stream of observable rows
             }),
-            map(row => ({
-                delay: Number(row.split(",")[0]),
-                text: row.split(",")[1],
-            })),
+            // map(row => ({
+            //     delay: Number(row.split(",")[0]),
+            //     text: row.split(",")[1],
+            // })),
+			// delayWhen(({delay}) => timer(delay * 1000)) // when the above happens wait this much time
+			
 			// mergemap for absolute timer from the source observable, 
 			// subsequent events overlap in delay since there is strict timer delay the finishing order is guarenteed
 			// as required
-			mergeMap(({delay, text}) => timer(delay * 1000).pipe(map(() => ({text})))),
+			// mergeMap(({delay, text}) => timer(delay * 1000).pipe(map(() => ({text})))),
 			// could also use delayWhen()
-        ).subscribe(({text}) => console.log(text))
+        ).subscribe(console.log)
 }
 /**
  * Do Not Modify

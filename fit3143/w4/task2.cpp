@@ -54,9 +54,9 @@ void *findCompositesInRange(void *arg) {
     return nullptr;
 }
 
-void printPrimesToNParalell(int n, int threads) {
+std::vector<bool> printPrimesToNParalell(int n, int threads) {
     if (n < 2)
-        return;
+        return {true, true};
 
 	// get primes < sqrt(n)
     auto basePrimes = getPrimesToSqrtN((int)floor(sqrt(n)));
@@ -94,9 +94,7 @@ void printPrimesToNParalell(int n, int threads) {
     for (int t = 0; t < threadSpawned; t++)
         pthread_join(threadsIds[t], NULL);
 
-    for (int64_t i = 2; i < n; ++i)
-        if (!isComp[i])
-            std::cout << i << '\n'; //output
+    return isComp;
 }
 
 int main() {
@@ -104,12 +102,17 @@ int main() {
     std::cout << "Enter a value for n: ";
     std::cin >> n;
 
-    const int threads = 8;
+	const int threads = 8;
+
     {
         using namespace std::chrono;
         auto start = high_resolution_clock::now();
-        printPrimesToNParalell(n, threads);
+        const auto isComp = printPrimesToNParalell(n, threads);
         auto end = high_resolution_clock::now();
+
+		// for (int64_t i = 2; i < n; ++i)
+        // 	if (!isComp[i])
+        //     	std::cout << i << '\n'; // output rest
 
         std::cout << "Time taken: "
                   << duration_cast<microseconds>(end - start).count() / 10e6

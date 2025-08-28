@@ -1,0 +1,17 @@
+{
+    "name": "workshop5",
+    "type": "commonjs",
+    "private": true,
+    "license": "MIT",
+    "main": "index.js",
+    "scripts": {
+        "conslist": "jest --bail --watchAll",
+        "sequence": "npx ts-node-dev --respawn src/sequence.ts"
+    },
+    "devDependencies": {
+        "jest": "^30.0.4",
+        "ts-node": "^10.9.2",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "~5.8.3"
+    }
+}

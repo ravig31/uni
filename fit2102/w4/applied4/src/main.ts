@@ -7,6 +7,8 @@ import {
     map,
     merge,
     scan,
+    startWith,
+    switchMap,
     type Observable,
 } from "rxjs";
 
@@ -17,6 +19,8 @@ const Constants = {
     GRAVITY: 1,
     GROUND: 378.5,
     SEED: 1234,
+    JUMP_VEL_LB: -12,
+    JUMP_VEL_UB: -6,
 };
 
 // Stub value to indicate an implementation
@@ -49,7 +53,7 @@ abstract class RNG {
  *
  * /Hint/: An RNG stream will need to accumulate state to produce a stream of random values.
  *
- * /Hint 2/: VXNlIHNjYW4=
+ * /Hint 2/: VXNlIHNjYW4= Use scan
  *
  * /Challenge/: Implement this using a lazy sequence of random numbers.
  * It is interesting and more generally useful than just a stream.
@@ -66,23 +70,37 @@ abstract class RNG {
  * @param seed The seed for the random number generator
  */
 export function createRngStreamFromSource<T>(source$: Observable<T>) {
-    return function createRngStream(
-        seed: number = 0,
-    ): Observable<IMPLEMENT_THIS> {
-        const randomNumberStream = source$.pipe(IMPLEMENT_THIS);
-
+    return function createRngStream(seed: number = 0): Observable<number> {
+        const randomNumberStream = source$.pipe(
+            scan((prevRandom, _) => RNG.hash(prevRandom), seed),
+            map(unscaled => RNG.scale(unscaled)),
+        );
         return randomNumberStream;
     };
 }
+
+const scaleToRange =
+    (lowerBound: number, upperBound: number) => (random: number) =>
+        lowerBound + ((random + 1) / 2) * (upperBound - lowerBound);
+
+const jumpRange = scaleToRange(Constants.JUMP_VEL_LB, Constants.JUMP_VEL_UB);
 
 const main = () => {
     // The state of the game should include at least:
     // - vertical position of dot
     // - vertical velocity of dot
     // - number of bounces
-    type State = IMPLEMENT_THIS;
+    type State = {
+        yPos: number;
+        yVel: number;
+        bounces: number;
+    };
 
-    const initialState: State = IMPLEMENT_THIS;
+    const initialState: State = {
+        yPos: 0,
+        yVel: 0,
+        bounces: 0,
+    };
 
     /*****************************************************************
      * Exercise 2 — Create the jump stream
@@ -94,10 +112,28 @@ const main = () => {
      *
      * This should produce a stream of (state) => newState functions.
      *****************************************************************/
-    const jump$: Observable<(s: State) => State> = fromEvent<KeyboardEvent>(
-        document,
-        "keydown",
-    ).pipe(map(_ => s => s));
+
+    // const space$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
+    //     filter(({ code }) => code === "Space"),
+    // );
+
+    // const randomJumpVel$: Observable<number> = createRngStreamFromSource(
+    //     space$,
+    // )(0).pipe(map(r => scaleToCanvas(r)));
+
+    // const jump$: Observable<(s: State) => State> = randomJumpVel$.pipe(
+    //     map(
+    //         randomVel =>
+    //             (state: State): State =>
+    //                 state.yPos === Constants.GROUND
+    //                     ? {
+    //                           ...state,
+    //                           yVel: randomVel,
+    //                           bounces: state.bounces + 1,
+    //                       }
+    //                     : state,
+    //     ),
+    // );
 
     /*****************************************************************
      * Exercise 3 — Create the tick stream
@@ -110,9 +146,16 @@ const main = () => {
      *
      * Output should be a function: (state) => newState
      *****************************************************************/
-    const tick$: Observable<(s: State) => State> = interval(20).pipe(
-        map(_ => s => s),
-    );
+    // const tick$: Observable<(s: State) => State> = interval(20).pipe(
+    //     map(
+    //         () =>
+    //             (state: State): State => ({
+    //                 ...state,
+    //                 yPos: Math.min(Constants.GROUND, state.yPos + state.yVel),
+    //                 yVel: state.yVel + Constants.GRAVITY,
+    //             }),
+    //     ),
+    // );
 
     /*****************************************************************
      * Exercise 4 — Create the game state stream
@@ -123,9 +166,9 @@ const main = () => {
      *
      * This stream will represent the full evolution of game state over time.
      *****************************************************************/
-    const state$: Observable<State> = merge(IMPLEMENT_THIS).pipe(
-        scan((state, reducerFn) => IMPLEMENT_THIS, initialState),
-    );
+    // const state$: Observable<State> = merge(jump$, tick$).pipe(
+    //     scan((state, reducerFn) => reducerFn(state), initialState),
+    // );
 
     /*****************************************************************
      * Exercise 5 — Render to the DOM
@@ -135,19 +178,20 @@ const main = () => {
      *    - update the bounce counter
      * This is the only part of your code that should perform side effects.
      *****************************************************************/
-    const dot = document.getElementById("dot") as HTMLElement;
-    const bounceCounter = document.getElementById("numBounces") as HTMLElement;
+    // const dot = document.getElementById("dot") as HTMLElement;
+    // const bounceCounter = document.getElementById("numBounces") as HTMLElement;
 
-    state$.subscribe(state => {
-        IMPLEMENT_THIS;
-    });
+    // state$.subscribe(state => {
+    //     dot.style.top = `${state.yPos}px`;
+    //     bounceCounter.textContent = `${state.bounces}`;
+    // });
 
     /*****************************************************************
    * Exercise 6 — Add Random Jump Strength
    *
    * Replace the fixed jump velocity with a random one using a stream of
    * random numbers generated each time the dot jumps.
-   *
+   * 
    * Tips:
    * - Convert the number in [-1, 1] to a jump strength (e.g. in [-12, -6])
    * - Edits should be done throughout the code.
@@ -166,6 +210,66 @@ const main = () => {
      * - Use `startWith(null)` to trigger the game loop on first load
      * - Edits should be done throughout the code.
      *****************************************************************/
+
+    const restart$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
+        filter(({ code }) => code === "KeyR"),
+        startWith(null), // restart
+    );
+
+    const game$ = restart$.pipe(
+        //Restart an interval Observable on every event (https://rxjs.dev/api/operators/switchMap)
+        switchMap(() => {
+            const space$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
+                filter(({ code }) => code === "Space"),
+            );
+
+            const randomJumpVel$: Observable<number> =
+                createRngStreamFromSource(space$)(Constants.SEED).pipe(
+                    map(r => jumpRange(r)),
+                );
+
+            const jump$: Observable<(s: State) => State> = randomJumpVel$.pipe(
+                map(
+                    randomVel =>
+                        (state: State): State =>
+                            state.yPos === Constants.GROUND
+                                ? {
+                                      ...state,
+                                      yVel: randomVel,
+                                      bounces: state.bounces + 1,
+                                  }
+                                : state,
+                ),
+            );
+            const tick$: Observable<(s: State) => State> = interval(20).pipe(
+                map(
+                    () =>
+                        (state: State): State => ({
+                            ...state,
+                            yPos: Math.min(
+                                Constants.GROUND,
+                                state.yPos + state.yVel,
+                            ),
+                            yVel: state.yVel + Constants.GRAVITY,
+                        }),
+                ),
+            );
+
+            const state$: Observable<State> = merge(jump$, tick$).pipe(
+                scan((state, reducerFn) => reducerFn(state), initialState),
+            );
+
+            return state$;
+        }),
+    );
+
+    const dot = document.getElementById("dot") as HTMLElement;
+    const bounceCounter = document.getElementById("numBounces") as HTMLElement;
+
+    game$.subscribe(state => {
+        dot.style.top = `${state.yPos}px`;
+        bounceCounter.textContent = `${state.bounces}`;
+    });
 };
 if (typeof window !== "undefined") {
     window.addEventListener("load", main);
